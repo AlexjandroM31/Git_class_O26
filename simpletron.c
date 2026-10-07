@@ -1,25 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MEMORY_SIZE 100
 #define SENTINEL 9999
 
 // Definición de Operaciones SML
-// Operaciones de Entrada/Salida
 #define READ 10
 #define WRITE 11
 
-// Operaciones de Carga y Almacenamiento
 #define LOAD 20
 #define STORE 21
 
-// Operaciones Aritméticas
 #define ADD 30
 #define SUBTRACT 31
 #define DIVIDE 32
 #define MULTIPLY 33
 
-// Operaciones de Transferencia de Control
 #define BRANCH 40
 #define BRANCHNEG 41
 #define BRANCHZERO 42
@@ -44,16 +41,51 @@ int main(void) {
 }
 
 void displayWelcomeMessage(void) {
-    printf("*** Bienvenid@ a Simpletron! ***\n");
+    printf("*** Bienvenid@ a Simpletron! ***\n\n");
+}
+
+void loadProgram(int memory[]) {
+    char filename[100];
+    printf("Ingrese el nombre del archivo SML (o presione ENTER para entrada manual): ");
+    
+    if (fgets(filename, sizeof(filename), stdin) != NULL) {
+        // Remover el salto de línea al final
+        filename[strcspn(filename, "\r\n")] = 0;
+    }
+
+    // 1. CARGA DESDE ARCHIVO DISCO (.sml)
+    if (strlen(filename) > 0) {
+        FILE *file = fopen(filename, "r");
+        if (file == NULL) {
+            printf("*** Error: No se pudo abrir el archivo %s. ***\n", filename);
+            printf("*** Cambiando a modo de entrada manual... ***\n\n");
+        } else {
+            int instructionPointer = 0;
+            int instruction = 0;
+
+            while (fscanf(file, "%d", &instruction) != EOF && instructionPointer < MEMORY_SIZE) {
+                if (instruction == SENTINEL) {
+                    break;
+                }
+                if (isValidWord(instruction)) {
+                    memory[instructionPointer++] = instruction;
+                }
+            }
+            fclose(file);
+            printf("*** Carga del archivo '%s' completada (%d instrucciones/datos) ***\n", filename, instructionPointer);
+            printf("*** Empieza la ejecucion del programa ***\n\n");
+            return;
+        }
+    }
+
+    // 2. CARGA MANUAL POR TECLADO
     printf("*** Por favor, introduzca en su programa una instruccion ***\n");
     printf("*** (o palabra de datos) a la vez. Yo tipeare la ***\n");
     printf("*** posicion de memoria y un signo de interrogacion (?). ***\n");
     printf("*** Usted tipeela palabra para esa posicion. Tipee el ***\n");
     printf("*** centinela 9999 para terminar la introduccion de ***\n");
     printf("*** su programa. ***\n\n");
-}
 
-void loadProgram(int memory[]) {
     int instructionPointer = 0;
     int instruction = 0;
 
@@ -103,6 +135,9 @@ void executeProgram(int memory[]) {
         // --- 2. DECODE (Decodificación) ---
         operationCode = instructionRegister / 100;
         operand = instructionRegister % 100;
+
+        // Corregir opCodes negativos si fuera el caso
+        if (operationCode < 0) operationCode = -operationCode;
 
         // Validar operando de memoria
         if (operand < 0 || operand >= MEMORY_SIZE) {
@@ -194,7 +229,7 @@ void executeProgram(int memory[]) {
                 break;
 
             case HALT:
-                printf("*** Terminó la ejecucion de Simpletron ***\n");
+                printf("*** Termino la ejecucion de Simpletron ***\n");
                 isRunning = 0;
                 break;
 
