@@ -1,80 +1,54 @@
-# 🖥️ Simpletron Hardware Simulator (SML)
+# Proyecto Final: Compilador y Simulador Simpletron
 
-![C Architecture](https://img.shields.io/badge/Language-C99-blue.svg)
-![Status](https://img.shields.io/badge/Status-Completed-success.svg)
+## Descripción general del proyecto
+Este proyecto integra el desarrollo completo de un simulador de la computadora virtual Simpletron y la construcción de un compilador de dos pasadas para el lenguaje de alto nivel "Simple". El sistema permite escribir programas en lenguaje Simple, convertirlos a lenguaje de máquina SML (Simpletron Machine Language) mediante el compilador, y ejecutarlos directamente en el simulador modificado. 
 
-Simulador por software de la computadora **Simpletron**, desarrollado en C. Este proyecto implementa la ejecución paso a paso de programas escritos en **Simpletron Machine Language (SML)**, modelando la memoria principal, los registros de control y el ciclo clásico de ejecución (*Fetch-Decode-Execute*).
+El proyecto demuestra el ciclo completo de procesamiento de un programa, desde el análisis léxico y la tabla de símbolos hasta el vaciado de memoria post-ejecución, incluyendo la evaluación de expresiones infijas a postfijas.
 
-Basado en las especificaciones del libro *Cómo programar en C* (Deitel & Deitel).
+## Integrantes
+*   [Tu Nombre Completo] - Desarrollador Principal
 
----
+## Descripción de archivos principales
+*   **`compilador.cpp`**: Archivo fuente en C++ que contiene el compilador completo. Lee un archivo con extensión `.simple`, realiza dos pasadas para construir la tabla de símbolos y resolver referencias hacia adelante, y genera un archivo ejecutable `.sml`.
+*   **`simpletron.c`**: Archivo fuente en C modificado del simulador original. Está programado para cargar instrucciones desde un archivo `.sml`, ejecutar el programa y generar un Memory Dump (vaciado de memoria) al finalizar.
+*   **`programa.simple`**: Archivo de texto utilizado como entrada de prueba para el compilador. Contiene código escrito en el lenguaje de alto nivel Simple.
+*   **`codigo.sml`**: Archivo generado automáticamente por el compilador, el cual contiene las instrucciones numéricas en lenguaje máquina listas para ejecutarse.
 
-## 📑 Tabla de Contenidos
+## Instrucciones de compilación
+Para poder ejecutar el sistema, es necesario compilar tanto el compilador como el simulador desde una terminal (como PowerShell o Bash).
 
-- [Características Principales](#-características-principales)
-- [Arquitectura del Sistema](#-arquitectura-del-sistema)
-- [Conjunto de Instrucciones SML](#-conjunto-de-instrucciones-sml)
-- [Requisitos e Instalación](#-requisitos-e-instalación)
-- [Casos de Prueba](#-casos-de-prueba)
-  - [Prueba 1: Ejecución Correcta (Suma de 2 números)](#prueba-1-ejecución-correcta-suma-de-2-números)
-  - [Prueba 2: Error Fatal (División entre cero)](#prueba-2-error-fatal-división-entre-cero)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
+1.  **Compilar el simulador Simpletron:**
+    ```bash
+    gcc -o simpletron.exe simpletron.c
+    ```
 
----
+2.  **Compilar el compilador de Simple a SML:**
+    ```bash
+    g++ -o compilador.exe compilador.cpp
+    ```
 
-## 🚀 Características Principales
+## Instrucciones de ejecución
+El flujo de trabajo consta de dos pasos principales: primero compilar el programa fuente y luego ejecutarlo.
 
-* **Memoria Principal:** Arreglo simulado de 100 posiciones (`00` a `99`) para datos e instrucciones.
-* **Ciclo de Instrucción Completo:** Implementación de las fases de *Fetch*, *Decode* y *Execute*.
-* **Control de Errores e Integridad:**
-  * Validación de rango de palabras introducidas ($-9999$ a $+9999$).
-  * Detección de desbordamiento (*Overflow* y *Underflow*) en el acumulador.
-  * Protección contra división entre cero.
-  * Prevención de accesos fuera de rango en memoria e instrucciones inválidas.
-* **Vaciado de Memoria (Memory Dump):** Despliegue visual completo de los registros internos y el estado de la memoria tras finalizar la ejecución o al ocurrir un error fatal.
+1.  Asegúrese de que su archivo de código fuente se llame `programa.simple` y se encuentre en el mismo directorio.
+2.  **Ejecute el compilador:**
+    ```bash
+    .\compilador.exe
+    ```
+    *Este paso generará automáticamente el archivo `codigo.sml`.*
+3.  **Ejecute el simulador:**
+    ```bash
+    .\simpletron.exe
+    ```
+4.  Cuando el simulador pregunte: *"Ingrese el nombre del archivo SML (o presione ENTER para entrada manual):"*, escriba **`codigo.sml`** y presione Enter.
 
----
-
-## 📐 Arquitectura del Sistema
-
-El simulador cuenta con los siguientes componentes:
-
-| Componente | Variable en C | Descripción |
-| :--- | :--- | :--- |
-| **Acumulador** | `accumulator` | Registro donde se realizan las operaciones aritméticas y de carga. |
-| **Contador de Instrucciones** | `instructionCounter` | Apunta a la dirección de la siguiente instrucción a ejecutar. |
-| **Registro de Instrucción** | `instructionRegister` | Contiene la instrucción actual extraída de memoria. |
-| **Código de Operación** | `operationCode` | Extrae los dos primeros dígitos de la instrucción (operación a realizar). |
-| **Operando** | `operand` | Extrae los dos últimos dígitos de la instrucción (dirección de memoria). |
-
----
-
-## 📜 Conjunto de Instrucciones SML
-
-El formato de cada palabra SML es de cuatro dígitos con signo (`+OPADDR` / `-OPADDR`).
-
-| Categoría | Código (OP) | Mnemónico | Descripción |
-| :--- | :---: | :--- | :--- |
-| **Entrada / Salida** | `10` | `READ` | Lee una palabra desde el teclado y la almacena en `memory[operand]`. |
-| | `11` | `WRITE` | Muestra en pantalla el contenido de `memory[operand]`. |
-| **Carga / Almacenamiento** | `20` | `LOAD` | Carga una palabra de `memory[operand]` en el acumulador. |
-| | `21` | `STORE` | Almacena el valor del acumulador en `memory[operand]`. |
-| **Aritmética** | `30` | `ADD` | Suma `memory[operand]` al acumulador. |
-| | `31` | `SUBTRACT` | Resta `memory[operand]` al acumulador. |
-| | `32` | `DIVIDE` | Divide el acumulador entre `memory[operand]`. |
-| | `33` | `MULTIPLY` | Multiplica el acumulador por `memory[operand]`. |
-| **Transferencia de Control**| `40` | `BRANCH` | Salto incondicional a la dirección `operand`. |
-| | `41` | `BRANCHNEG` | Salta a `operand` si el acumulador es negativo. |
-| | `42` | `BRANCHZERO`| Salta a `operand` si el acumulador es cero. |
-| | `43` | `HALT` | Detiene la ejecución del programa. |
-
----
-
-## 🛠️ Requisitos e Instalación
-
-### Requisitos Previos
-* Compilador **GCC** o **Clang** compatible con C99 o superior.
-
-### Compilación
-```bash
-gcc -Wall -Wextra -std=c99 simpletron.c -o simpletron
+## Ejemplos de entrada y salida
+### Programa de prueba: Media de 3 números
+**Entrada (Código en `programa.simple`):**
+```text
+10 input a
+20 input b
+30 input c
+40 let m = ( a + b + c ) / 3
+50 print m
+60 end
